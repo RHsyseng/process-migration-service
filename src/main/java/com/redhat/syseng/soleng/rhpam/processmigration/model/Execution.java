@@ -5,33 +5,55 @@
  */
 package com.redhat.syseng.soleng.rhpam.processmigration.model;
 
+import java.net.URI;
+import java.util.Date;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  *
  * @author czhu
  */
 public class Execution {
-    private String executeTime;
-    private String callbackUrl;
 
-    public String getCallbackUrl() {
-        return callbackUrl;
+    public enum ExecutionType {
+	ASYNC, SYNC
     }
 
-    public void setCallbackUrl(String callbackUrl) {
-        this.callbackUrl = callbackUrl;
+    public enum ExecutionStatus {
+	SCHEDULED, STARTED, COMPLETED, COMPLETED_WITH_ERRORS, CANCELLED, CREATED
     }
 
-    public String getExecuteTime() {
-        return executeTime;
+    private ExecutionType type;
+
+    @JsonProperty("callback_url")
+    private URI callbackUrl;
+
+    @JsonProperty("start_at")
+    private Date startAt;
+
+    public ExecutionType getType() {
+	return type;
     }
 
-    public void setExecuteTime(String executeTime) {
-        this.executeTime = executeTime;
+    public void setType(ExecutionType type) {
+	this.type = type;
     }
-    
-    @Override
-    public String toString() {
-        return "Execution [executeTime=" + executeTime + ", callbackUrl=" + callbackUrl + "]";
-    }     
-    
+
+    public URI getCallbackUrl() {
+	return callbackUrl;
+    }
+
+    public void setCallbackUrl(URI callbackUrl) {
+	this.callbackUrl = callbackUrl;
+    }
+
+    public Date getStartAt() {
+	return startAt;
+    }
+
+    public void setStartAt(Date startAt) {
+	this.startAt = startAt;
+    }
+
 }
