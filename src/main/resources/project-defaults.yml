@@ -1,0 +1,19 @@
+swarm:
+  deployment:
+    process-migration.war:
+      jaxrs:
+        application-path: /
+  logging:
+    org.kie.server:
+      level: DEBUG
+    com.redhat.syseng:
+      level: DEBUG
+kieserver:
+  username: krisv
+  password: krisv
+  host: localhost
+  port: 8080
+  protocol: http
+  contextRoot: /kie-server
+db:
+  path: /tmp/migration-db 

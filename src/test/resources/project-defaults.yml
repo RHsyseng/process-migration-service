@@ -1,0 +1,12 @@
+swarm:
+  deployment:
+    process-migration.war:
+      jaxrs:
+        application-path: /
+kieserver:
+  username: krisv
+  password: krisv
+  host: localhost
+  port: 8080
+  protocol: http
+  contextRoot: /kie-server
