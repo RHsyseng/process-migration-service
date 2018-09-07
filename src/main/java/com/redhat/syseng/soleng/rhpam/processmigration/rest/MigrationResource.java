@@ -32,62 +32,62 @@ public class MigrationResource {
     private MigrationService migrationService;
 
     @GET
-    @Consumes({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
     public Response findAll() {
-	return Response.ok(migrationService.findAll()).build();
+        return Response.ok(migrationService.findAll()).build();
     }
 
     @GET
     @Path("/{id}")
     public Response get(@PathParam("id") Long id) {
-	Migration migration = migrationService.get(id);
-	if (migration == null) {
-	    return getMigrationNotFound(id);
-	}
-	return Response.ok(migration).build();
+        Migration migration = migrationService.get(id);
+        if (migration == null) {
+            return getMigrationNotFound(id);
+        }
+        return Response.ok(migration).build();
     }
 
     @GET
     @Path("/{id}/results")
     public Response getResults(@PathParam("id") Long id) {
-	List<ProcessInstanceMigration> results = migrationService.getResults(id);
-	if (results == null) {
-	    return getMigrationNotFound(id);
-	}
-	return Response.ok(results).build();
+        List<ProcessInstanceMigration> results = migrationService.getResults(id);
+        if (results == null) {
+            return getMigrationNotFound(id);
+        }
+        return Response.ok(results).build();
     }
 
     @POST
-    @Consumes({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
     public Response submit(MigrationDefinition migration) throws NamingException, ParseException {
-	return Response.ok(migrationService.submit(migration)).build();
+        return Response.ok(migrationService.submit(migration)).build();
     }
 
     @PUT
     @Path("/{id}")
-    @Consumes({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
     public Response update(@PathParam("id") Long id, MigrationDefinition migration) {
-	if (migrationService.get(id) == null) {
-	    return getMigrationNotFound(id);
-	}
-	// TODO: Support reschedule migrations
-	return Response.notModified().build();
+        if (migrationService.get(id) == null) {
+            return getMigrationNotFound(id);
+        }
+        // TODO: Support reschedule migrations
+        return Response.notModified().build();
     }
 
     @DELETE
     @Path("/{id}")
-    @Consumes({ MediaType.APPLICATION_JSON })
+    @Consumes({MediaType.APPLICATION_JSON})
     public Response delete(@PathParam("id") Long id) {
-	Migration migration = migrationService.cancel(id);
-	if (migration == null) {
-	    return getMigrationNotFound(id);
-	}
-	return Response.ok(migration).build();
+        Migration migration = migrationService.cancel(id);
+        if (migration == null) {
+            return getMigrationNotFound(id);
+        }
+        return Response.ok(migration).build();
     }
 
     private Response getMigrationNotFound(Long id) {
-	return Response.status(Status.NOT_FOUND)
-		.entity(String.format("{\"message\": \"Migration with id %s does not exist\"}", id)).build();
+        return Response.status(Status.NOT_FOUND)
+                       .entity(String.format("{\"message\": \"Migration with id %s does not exist\"}", id)).build();
     }
 
 }

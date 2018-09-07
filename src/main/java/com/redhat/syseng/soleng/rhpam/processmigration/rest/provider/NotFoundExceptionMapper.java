@@ -14,8 +14,8 @@ public class NotFoundExceptionMapper implements ExceptionMapper<PlanNotFoundExce
 
     @Override
     public Response toResponse(PlanNotFoundException exception) {
-	JsonObject json = Json.createObjectBuilder().add("message", exception.getMessage()).build();
-	return Response.status(Response.Status.BAD_REQUEST).entity(json).type(MediaType.APPLICATION_JSON).build();
+        JsonObject json = Json.createObjectBuilder().add("message", exception.getMessage()).build();
+        return Response.status(Response.Status.BAD_REQUEST).entity(json).type(MediaType.APPLICATION_JSON).build();
     }
 
 }

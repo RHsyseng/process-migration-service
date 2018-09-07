@@ -28,71 +28,71 @@ public class KieServerConfig {
     private String protocol;
 
     public String getHost() {
-	return host;
+        return host;
     }
 
     public void setHost(String host) {
-	this.host = host;
+        this.host = host;
     }
 
     public Integer getPort() {
-	return port;
+        return port;
     }
 
     public void setPort(Integer port) {
-	this.port = port;
+        this.port = port;
     }
 
     public String getContextRoot() {
-	return contextRoot;
+        return contextRoot;
     }
 
     public void setContextRoot(String contextRoot) {
-	this.contextRoot = contextRoot;
+        this.contextRoot = contextRoot;
     }
 
     public String getUsername() {
-	return username;
+        return username;
     }
 
     public void setUsername(String username) {
-	this.username = username;
+        this.username = username;
     }
 
     public String getPassword() {
-	return password;
+        return password;
     }
 
     public void setPassword(String password) {
-	this.password = password;
+        this.password = password;
     }
 
     public String getProtocol() {
-	return protocol;
+        return protocol;
     }
 
     public void setProtocol(String protocol) {
-	this.protocol = protocol;
+        this.protocol = protocol;
     }
 
     public String getUrl() {
-	return new StringBuilder(protocol)
-		.append("://")
-		.append(host)
-		.append(":")
-		.append(port)
-		.append(contextRoot)
-		.append("/services/rest/server")
-		.toString();
+        return new StringBuilder(protocol)
+                                          .append("://")
+                                          .append(host)
+                                          .append(":")
+                                          .append(port)
+                                          .append(contextRoot)
+                                          .append("/services/rest/server")
+                                          .toString();
     }
 
     @Override
     public String toString() {
-	StringBuilder builder = new StringBuilder();
-	builder.append("KieServerConfig [host=").append(host).append(", port=").append(port).append(", contextRoot=")
-		.append(contextRoot).append(", username=").append(username).append(", password=").append(password)
-		.append(", protocol=").append(protocol).append("]");
-	return builder.toString();
+        StringBuilder builder = new StringBuilder();
+        builder.append("KieServerConfig [host=").append(host).append(", port=").append(port).append(", contextRoot=")
+               .append(contextRoot).append(", username=").append(username).append(", password=").append(password)
+               .append(", protocol=").append(protocol).append("]");
+        return builder.toString();
     }
 
 }

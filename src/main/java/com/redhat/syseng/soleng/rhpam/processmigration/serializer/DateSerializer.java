@@ -16,16 +16,15 @@ public class DateSerializer extends StdSerializer<Date> {
     private static final long serialVersionUID = -4733510908672603197L;
 
     public DateSerializer() {
-	super(Date.class);
+        super(Date.class);
     }
 
     @Override
-    public void serialize(Date date, JsonGenerator generator, SerializerProvider provider)
-	    throws IOException, JsonProcessingException {
-	if (date != null) {
-	    LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC.normalized());
-	    generator.writeString(localDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
-	}
+    public void serialize(Date date, JsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+        if (date != null) {
+            LocalDateTime localDateTime = LocalDateTime.ofInstant(date.toInstant(), ZoneOffset.UTC.normalized());
+            generator.writeString(localDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
+        }
     }
 
 }

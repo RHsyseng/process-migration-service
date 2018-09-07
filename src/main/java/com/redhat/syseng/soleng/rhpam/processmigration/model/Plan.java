@@ -18,51 +18,51 @@ public class Plan implements Identifiable {
     private Map<String, String> mappings = new HashMap<>();
 
     public Long getId() {
-	return id;
+        return id;
     }
 
     public void setId(Long id) {
-	this.id = id;
+        this.id = id;
     }
 
     public String getName() {
-	return name;
+        return name;
     }
 
     public void setName(String name) {
-	this.name = name;
+        this.name = name;
     }
 
     public String getDescription() {
-	return description;
+        return description;
     }
 
     public void setDescription(String Description) {
-	this.description = Description;
+        this.description = Description;
     }
 
     public ProcessDefinition getSource() {
-	return source;
+        return source;
     }
 
     public void setSource(ProcessDefinition source) {
-	this.source = source;
+        this.source = source;
     }
 
     public ProcessDefinition getTarget() {
-	return target;
+        return target;
     }
 
     public void setTarget(ProcessDefinition target) {
-	this.target = target;
+        this.target = target;
     }
 
     public Map<String, String> getMappings() {
-	return mappings;
+        return mappings;
     }
 
     public void setMappings(Map<String, String> mappings) {
-	this.mappings = mappings;
+        this.mappings = mappings;
     }
 
 }
