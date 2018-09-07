@@ -8,7 +8,7 @@ import com.redhat.syseng.soleng.rhpam.processmigration.model.ProcessInstanceMigr
 public class ProcessInstanceMigrationPersistenceServiceImpl extends PersistenceServiceImpl<ProcessInstanceMigration> {
 
     public ProcessInstanceMigrationPersistenceServiceImpl() {
-	super(ProcessInstanceMigration.class);
+        super(ProcessInstanceMigration.class);
     }
 
 }

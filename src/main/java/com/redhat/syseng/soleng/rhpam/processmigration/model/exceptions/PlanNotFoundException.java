@@ -6,11 +6,11 @@ public class PlanNotFoundException extends RuntimeException {
     private final Long id;
 
     public PlanNotFoundException(Long id) {
-	this.id = id;
+        this.id = id;
     }
 
     public String getMessage() {
-	return "Plan not found with id: " + id;
+        return "Plan not found with id: " + id;
     }
 
 }

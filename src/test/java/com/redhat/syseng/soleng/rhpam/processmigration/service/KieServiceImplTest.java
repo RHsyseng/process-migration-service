@@ -12,14 +12,14 @@ import com.redhat.syseng.soleng.rhpam.processmigration.model.KieServerConfig;
 
 public class KieServiceImplTest {
 
-    @Inject
-    private KieServerConfig config;
+  @Inject
+  private KieServerConfig config;
 
-    @Test
-    @Ignore
-    public void testConfiguration() {
-	assertNotNull(config);
-	assertEquals("localhost", config.getHost());
-	assertEquals(Integer.valueOf(8080), config.getPort());
-    }
+  @Test
+  @Ignore
+  public void testConfiguration() {
+	 assertNotNull(config);
+	 assertEquals("localhost", config.getHost());
+	 assertEquals(Integer.valueOf(8080), config.getPort());
+  }
 }

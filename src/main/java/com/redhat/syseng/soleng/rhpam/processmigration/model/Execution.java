@@ -17,11 +17,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class Execution {
 
     public enum ExecutionType {
-	ASYNC, SYNC
+        ASYNC,
+        SYNC
     }
 
     public enum ExecutionStatus {
-	SCHEDULED, STARTED, COMPLETED, COMPLETED_WITH_ERRORS, CANCELLED, CREATED
+        SCHEDULED,
+        STARTED,
+        COMPLETED,
+        COMPLETED_WITH_ERRORS,
+        CANCELLED,
+        CREATED
     }
 
     private ExecutionType type;
@@ -33,27 +39,27 @@ public class Execution {
     private Date startAt;
 
     public ExecutionType getType() {
-	return type;
+        return type;
     }
 
     public void setType(ExecutionType type) {
-	this.type = type;
+        this.type = type;
     }
 
     public URI getCallbackUrl() {
-	return callbackUrl;
+        return callbackUrl;
     }
 
     public void setCallbackUrl(URI callbackUrl) {
-	this.callbackUrl = callbackUrl;
+        this.callbackUrl = callbackUrl;
     }
 
     public Date getStartAt() {
-	return startAt;
+        return startAt;
     }
 
     public void setStartAt(Date startAt) {
-	this.startAt = startAt;
+        this.startAt = startAt;
     }
 
 }

@@ -4,6 +4,8 @@ import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 
+import com.redhat.syseng.soleng.rhpam.processmigration.model.KieServerConfig;
+import com.redhat.syseng.soleng.rhpam.processmigration.service.KieService;
 import org.jboss.logging.Logger;
 import org.kie.server.api.model.KieServerStateInfo;
 import org.kie.server.api.model.KieServiceResponse.ResponseType;
@@ -14,9 +16,6 @@ import org.kie.server.client.admin.ProcessAdminServicesClient;
 import org.kie.server.client.admin.impl.ProcessAdminServicesClientImpl;
 import org.kie.server.client.impl.KieServicesClientImpl;
 import org.kie.server.client.impl.KieServicesConfigurationImpl;
-
-import com.redhat.syseng.soleng.rhpam.processmigration.model.KieServerConfig;
-import com.redhat.syseng.soleng.rhpam.processmigration.service.KieService;
 
 @ApplicationScoped
 public class KieServiceImpl implements KieService {
@@ -31,32 +30,32 @@ public class KieServiceImpl implements KieService {
 
     @PostConstruct
     public void initKieServersConfig() {
-	logger.infov("Configuring Kie Services with: {0}", config.toString());
-	kieServicesConfig = new KieServicesConfigurationImpl(config.getUrl(), config.getUsername(),
-		config.getPassword());
-	this.processAdminServicesClient = new ProcessAdminServicesClientImpl(kieServicesConfig);
-	this.kieServicesClient = new KieServicesClientImpl(kieServicesConfig);
-	((ProcessAdminServicesClientImpl) processAdminServicesClient)
-		.setOwner((KieServicesClientImpl) kieServicesClient);
+        logger.infov("Configuring Kie Services with: {0}", config.toString());
+        kieServicesConfig = new KieServicesConfigurationImpl(config.getUrl(), config.getUsername(),
+                                                             config.getPassword());
+        this.processAdminServicesClient = new ProcessAdminServicesClientImpl(kieServicesConfig);
+        this.kieServicesClient = new KieServicesClientImpl(kieServicesConfig);
+        ((ProcessAdminServicesClientImpl) processAdminServicesClient)
+                                                                     .setOwner((KieServicesClientImpl) kieServicesClient);
     }
 
     public ProcessAdminServicesClient getProcessAdminServicesClient() {
-	return processAdminServicesClient;
+        return processAdminServicesClient;
     }
 
     public KieServicesClient getKieServicesClient() {
-	return kieServicesClient;
+        return kieServicesClient;
     }
 
     public ServiceResponse<KieServerStateInfo> getServerState() {
-	try {
-	    return kieServicesClient.getServerState();
-	} catch (Exception e) {
-	    ServiceResponse<KieServerStateInfo> response = new ServiceResponse<>();
-	    response.setType(ResponseType.FAILURE);
-	    response.setMsg(e.getMessage());
-	    return response;
-	}
+        try {
+            return kieServicesClient.getServerState();
+        } catch (Exception e) {
+            ServiceResponse<KieServerStateInfo> response = new ServiceResponse<>();
+            response.setType(ResponseType.FAILURE);
+            response.setMsg(e.getMessage());
+            return response;
+        }
     }
 
 }

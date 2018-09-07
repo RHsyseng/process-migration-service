@@ -8,7 +8,7 @@ import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
 public class PlanPersistenceServiceImpl extends PersistenceServiceImpl<Plan> {
 
     public PlanPersistenceServiceImpl() {
-	super(Plan.class);
+        super(Plan.class);
     }
 
 }
