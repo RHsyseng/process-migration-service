@@ -1,27 +1,58 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package com.redhat.syseng.soleng.rhpam.processmigration.model;
 
+import java.io.Serializable;
 import java.util.HashMap;
-import java.util.Map;
 
-import io.jsondb.annotation.Document;
-import io.jsondb.annotation.Id;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 
-@Document(collection = "plans", schemaVersion = "1.0")
-public class Plan implements Identifiable {
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@Entity
+@NamedQueries({
+               @NamedQuery(name = "Plan.findAll", query = "SELECT p FROM Plan p"),
+               @NamedQuery(name = "Plan.findById", query = "SELECT p FROM Plan p WHERE p.id = :id")
+})
+
+public class Plan implements Serializable {
 
     @Id
-    private Long id;
-    private String name;
-    private String description;
-    private ProcessDefinition source;
-    private ProcessDefinition target;
-    private Map<String, String> mappings = new HashMap<>();
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
 
-    public Long getId() {
+    private String name, description;
+    
+    @JsonProperty("container_id")
+    @Column(name = "container_id")
+    private String containerId;
+
+    @JsonProperty("target_container_id")
+    @Column(name = "target_container_id")
+    private String targetContainerId;
+
+    @JsonProperty("target_process_id")
+    @Column(name = "target_process_id")
+    private String targetProcessId;
+
+    @JsonProperty("node_mappings")
+    @Column(name = "node_mappings")
+    private HashMap<String, String> nodeMappings;
+
+    public long getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(long id) {
         this.id = id;
     }
 
@@ -37,32 +68,40 @@ public class Plan implements Identifiable {
         return description;
     }
 
-    public void setDescription(String Description) {
-        this.description = Description;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
-    public ProcessDefinition getSource() {
-        return source;
+    public String getContainerId() {
+        return containerId;
     }
 
-    public void setSource(ProcessDefinition source) {
-        this.source = source;
+    public void setContainerId(String containerId) {
+        this.containerId = containerId;
     }
 
-    public ProcessDefinition getTarget() {
-        return target;
+    public String getTargetContainerId() {
+        return targetContainerId;
     }
 
-    public void setTarget(ProcessDefinition target) {
-        this.target = target;
+    public void setTargetContainerId(String targetContainerId) {
+        this.targetContainerId = targetContainerId;
     }
 
-    public Map<String, String> getMappings() {
-        return mappings;
+    public String getTargetProcessId() {
+        return targetProcessId;
     }
 
-    public void setMappings(Map<String, String> mappings) {
-        this.mappings = mappings;
+    public void setTargetProcessId(String targetProcessId) {
+        this.targetProcessId = targetProcessId;
+    }
+
+    public HashMap<String, String> getNodeMappings() {
+        return nodeMappings;
+    }
+
+    public void setNodeMappings(HashMap<String, String> nodeMappings) {
+        this.nodeMappings = nodeMappings;
     }
 
 }
