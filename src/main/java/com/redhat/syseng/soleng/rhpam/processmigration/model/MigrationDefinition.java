@@ -10,43 +10,45 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+
 public class MigrationDefinition {
+
 
     @JsonProperty("plan_id")
     private Long planId;
     // TODO: private ProcessInstanceQuery query;
 
-    // TODO: Use java.util.List when not using JsonDB
+
     @JsonProperty("process_instances_id")
     private ArrayList<Long> processInstancesId = new ArrayList<>();
     private Execution execution;
 
     public Long getPlanId() {
-        return planId;
+	return planId;
     }
 
     public void setPlanId(Long planId) {
-        this.planId = planId;
+	this.planId = planId;
     }
 
     public List<Long> getProcessInstancesId() {
-        return processInstancesId;
+	return processInstancesId;
     }
 
     public void setProcessInstancesId(List<Long> processInstancesId) {
-        if (processInstancesId != null) {
-            this.processInstancesId = new ArrayList<>(processInstancesId);
-        } else {
-            this.processInstancesId = null;
-        }
+	if (processInstancesId != null) {
+	    this.processInstancesId = new ArrayList<>(processInstancesId);
+	} else {
+	    this.processInstancesId = null;
+	}
     }
 
     public Execution getExecution() {
-        return execution;
+	return execution;
     }
 
     public void setExecution(Execution execution) {
-        this.execution = execution;
+	this.execution = execution;
     }
 
 }

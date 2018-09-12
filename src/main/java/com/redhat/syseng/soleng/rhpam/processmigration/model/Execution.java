@@ -10,24 +10,15 @@ import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- *
- * @author czhu
- */
+
 public class Execution {
 
     public enum ExecutionType {
-        ASYNC,
-        SYNC
+	ASYNC, SYNC
     }
 
     public enum ExecutionStatus {
-        SCHEDULED,
-        STARTED,
-        COMPLETED,
-        COMPLETED_WITH_ERRORS,
-        CANCELLED,
-        CREATED
+	SCHEDULED, STARTED, COMPLETED, COMPLETED_WITH_ERRORS, CANCELLED, CREATED
     }
 
     private ExecutionType type;
@@ -35,31 +26,33 @@ public class Execution {
     @JsonProperty("callback_url")
     private URI callbackUrl;
 
-    @JsonProperty("start_at")
-    private Date startAt;
+    @JsonProperty("scheduled_start_time")
+    private Date scheduledStartTime;
+
+    public Date getScheduledStartTime() {
+        return scheduledStartTime;
+    }
+
+    public void setScheduledStartTime(Date scheduledStartTime) {
+        this.scheduledStartTime = scheduledStartTime;
+    }
 
     public ExecutionType getType() {
-        return type;
+	return type;
     }
 
     public void setType(ExecutionType type) {
-        this.type = type;
+	this.type = type;
     }
 
     public URI getCallbackUrl() {
-        return callbackUrl;
+	return callbackUrl;
     }
 
     public void setCallbackUrl(URI callbackUrl) {
-        this.callbackUrl = callbackUrl;
+	this.callbackUrl = callbackUrl;
     }
 
-    public Date getStartAt() {
-        return startAt;
-    }
 
-    public void setStartAt(Date startAt) {
-        this.startAt = startAt;
-    }
 
 }
