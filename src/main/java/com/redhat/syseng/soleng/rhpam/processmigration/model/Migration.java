@@ -6,98 +6,77 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionStatus;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 
 @Entity
+@Table(name = "migrations")
 @NamedQueries({
                @NamedQuery(name = "Migration.findAll", query = "SELECT p FROM Migration p"),
                @NamedQuery(name = "Migration.findById", query = "SELECT p FROM Migration p WHERE p.id = :id")
 })
-
 public class Migration implements Serializable {
+
+    private static final long serialVersionUID = 7212317252498596171L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    //@Column(name = "id")
     private Long id;
 
+    @Embedded
+    private MigrationDefinition definition;
+
+    @JsonProperty("created_at")
     @Column(name = "created_at")
     private Date createdAt;
 
+    @JsonProperty("started_at")
     @Column(name = "started_at")
     private Date startedAt;
 
+    @JsonProperty("finished_at")
     @Column(name = "finished_at")
     private Date finishedAt;
 
+    @JsonProperty("cancelled_at")
     @Column(name = "cancelled_at")
     private Date cancelledAt;
 
+    @JsonProperty("error_message")
     @Column(name = "error_message")
     private String errorMessage;
 
-    @Column(name = "process_instance_ids")
-    private String processInstancesIds;
+    private ExecutionStatus status;
 
-    //Execution
-    @Column(name = "execution_type")
-    private String executionType;
-
-    @Column(name = "execution_status")
-    private String executionStatus;
-
-    @Column(name = "callback_url")
-    private String callbackUrl;
-
-    @Column(name = "sechdule_start_time")
-    private Date scheduleStartTime;
-
-    @ManyToOne
-    @JoinColumn()
-    private Plan plan;
-
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JoinColumn(name = "migrationId")
+    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "migration_id")
     private List<MigrationReport> reports;
 
     public Migration() {}
 
     public Migration(MigrationDefinition definition, Plan plan) {
-        this.plan = plan;
-
-        processInstancesIds = definition.getProcessInstancesId().toString();
-        executionType = definition.getExecution().getType().toString();
-        if (definition.getExecution().getType().equals(Execution.ExecutionType.ASYNC)) {//these 2 fields only make sense when the type is "ASYNC", otherwise just ignore
-            callbackUrl = definition.getExecution().getCallbackUrl().toString();
-            scheduleStartTime = definition.getExecution().getScheduledStartTime();
-        }
+        this.definition = definition;
         Date now = new Date();
         createdAt = now;
         if (ExecutionType.ASYNC.equals(definition.getExecution().getType()) && now.before(definition.getExecution().getScheduledStartTime())) {
-            executionStatus = Execution.ExecutionStatus.SCHEDULED.toString();
+            status = Execution.ExecutionStatus.SCHEDULED;
         } else {
-            executionStatus = Execution.ExecutionStatus.CREATED.toString();
+            status = Execution.ExecutionStatus.CREATED;
         }
-    }
-
-    public List<MigrationReport> getReports() {
-        return reports;
-    }
-
-    public void setReports(List<MigrationReport> reports) {
-        this.reports = reports;
     }
 
     public Long getId() {
@@ -108,52 +87,20 @@ public class Migration implements Serializable {
         this.id = id;
     }
 
-    public Plan getPlan() {
-        return plan;
+    public MigrationDefinition getDefinition() {
+        return definition;
     }
 
-    public void setPlan(Plan plan) {
-        this.plan = plan;
+    public void setDefinition(MigrationDefinition definition) {
+        this.definition = definition;
     }
 
-    public String getProcessInstancesIds() {
-        return processInstancesIds;
+    public ExecutionStatus getStatus() {
+        return status;
     }
 
-    public void setProcessInstancesIds(String processInstancesIds) {
-        this.processInstancesIds = processInstancesIds;
-    }
-
-    public String getExecutionType() {
-        return executionType;
-    }
-
-    public void setExecutionType(String executionType) {
-        this.executionType = executionType;
-    }
-
-    public String getExecutionStatus() {
-        return executionStatus;
-    }
-
-    public void setExecutionStatus(String executionStatus) {
-        this.executionStatus = executionStatus;
-    }
-
-    public String getCallbackUrl() {
-        return callbackUrl;
-    }
-
-    public void setCallbackUrl(String callbackUrl) {
-        this.callbackUrl = callbackUrl;
-    }
-
-    public Date getScheduleStartTime() {
-        return scheduleStartTime;
-    }
-
-    public void setScheduleStartTime(Date scheduleStartTime) {
-        this.scheduleStartTime = scheduleStartTime;
+    public void setStatus(ExecutionStatus status) {
+        this.status = status;
     }
 
     public Date getCreatedAt() {
@@ -196,31 +143,39 @@ public class Migration implements Serializable {
         this.errorMessage = errorMessage;
     }
 
+    public List<MigrationReport> getReports() {
+        return reports;
+    }
+
+    public void setReports(List<MigrationReport> reports) {
+        this.reports = reports;
+    }
+
     public Migration start() {
         startedAt = new Date();
-        executionStatus = ExecutionStatus.STARTED.toString();
+        status = ExecutionStatus.STARTED;
         return this;
     }
 
     public Migration complete(Boolean hasErrors) {
         finishedAt = new Date();
         if (Boolean.TRUE.equals(hasErrors)) {
-            executionStatus = ExecutionStatus.COMPLETED_WITH_ERRORS.toString();
+            status = ExecutionStatus.COMPLETED_WITH_ERRORS;
         } else {
-            executionStatus = ExecutionStatus.COMPLETED.toString();
+            status = ExecutionStatus.COMPLETED;
         }
         return this;
     }
 
     public Migration cancel() {
         cancelledAt = new Date();
-        executionStatus = ExecutionStatus.CANCELLED.toString();
+        status = ExecutionStatus.CANCELLED;
         return this;
     }
 
     public Migration fail(Exception e) {
         finishedAt = new Date();
-        executionStatus = ExecutionStatus.COMPLETED_WITH_ERRORS.toString();
+        status = ExecutionStatus.COMPLETED_WITH_ERRORS;
         errorMessage = e.getMessage();
         return this;
     }

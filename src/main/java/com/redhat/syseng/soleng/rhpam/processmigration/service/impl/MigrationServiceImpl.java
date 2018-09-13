@@ -1,28 +1,25 @@
 package com.redhat.syseng.soleng.rhpam.processmigration.service.impl;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
+import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.exceptions.PlanNotFoundException;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.KieService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.MigrationService;
@@ -35,8 +32,8 @@ public class MigrationServiceImpl implements MigrationService {
 
     private static final Logger logger = Logger.getLogger(MigrationServiceImpl.class);
 
-    @PersistenceContext(unitName = "migration-unit")
-    EntityManager em;
+    @PersistenceContext
+    private EntityManager em;
 
     @Inject
     private PlanService planService;
@@ -44,35 +41,22 @@ public class MigrationServiceImpl implements MigrationService {
     @Inject
     private KieService kieService;
 
-    //Used by Junit test where em can't be injected
-    public void setEntityManagerAndPlanService(EntityManager em, PlanService planService) {
-        this.em = em;
-        this.planService = planService;
-    }
-
-    @PostConstruct
-    public void initKieConnection() {
-
-    }
-
     @Override
     public Migration get(Long id) {
-        //Migration result = null;
-        Query query = em.createNamedQuery("Migration.findById", Migration.class);
+        TypedQuery<Migration> query = em.createNamedQuery("Migration.findById", Migration.class);
         query.setParameter("id", id);
-        Migration result = (Migration) query.getSingleResult();
-
-        return result;
+        try {
+            return query.getSingleResult();
+        } catch (NoResultException e) {
+            return null;
+        }
     }
 
     @Override
     public List<MigrationReport> getResults(Long id) {
-
-        Query query = em.createNamedQuery("MigrationReport.findById", MigrationReport.class);
+        TypedQuery<MigrationReport> query = em.createNamedQuery("MigrationReport.findByMigrationId", MigrationReport.class);
         query.setParameter("id", id);
-        List<MigrationReport> result = query.getResultList();
-
-        return result;
+        return query.getResultList();
     }
 
     @Override
@@ -132,16 +116,7 @@ public class MigrationServiceImpl implements MigrationService {
     @Transactional
     public Migration update(Long id, MigrationDefinition definition) {
         Migration migration = get(id);
-        System.out.println("!!!!!!!!!!!!!!!!" + migration.getCallbackUrl());
-        if (null != migration) {
-            migration.getPlan().setId(definition.getPlanId());
-            migration.setProcessInstancesIds(definition.getProcessInstancesId().toString());
-            migration.setExecutionType(definition.getExecution().getType().toString());
-            if (definition.getExecution().getType().equals(Execution.ExecutionType.ASYNC)) {
-                //these 2 fields only make sense when the type is "ASYNC", otherwise just ignore
-                migration.setCallbackUrl(definition.getExecution().getCallbackUrl().toString());
-                migration.setScheduleStartTime(definition.getExecution().getScheduledStartTime());
-            }
+        if (migration != null) {
             em.persist(migration);
         }
         return migration;
@@ -153,20 +128,21 @@ public class MigrationServiceImpl implements MigrationService {
         try {
             AtomicBoolean hasErrors = new AtomicBoolean(false);
             //each instance id will spawn its own request to KIE server for migration.
-            List<Long> instancesIdList = parseProcessInstancesIds(migration.getProcessInstancesIds());
+            List<Long> instancesIdList = migration.getDefinition().getProcessInstanceIds();
             for (Long instanceId : instancesIdList) {
-                MigrationReportInstance report = kieService.getProcessAdminServicesClient().migrateProcessInstance(
-                                                                                                                   plan.getContainerId(), instanceId,
-                                                                                                                   plan.getTargetContainerId(), plan.getTargetProcessId(), plan.getNodeMappings());
-                if (!hasErrors.get() && !report.isSuccessful()) {
+                MigrationReportInstance reportInstance = kieService
+                                                                   .getProcessAdminServicesClient()
+                                                                   .migrateProcessInstance(
+                                                                                           plan.getSourceContainerId(),
+                                                                                           instanceId,
+                                                                                           plan.getTargetContainerId(),
+                                                                                           plan.getTargetProcessId(),
+                                                                                           plan.getMappings());
+                if (!hasErrors.get() && !reportInstance.isSuccessful()) {
                     hasErrors.set(Boolean.TRUE);
                 }
-                MigrationReport tmpReport = new MigrationReport();
-                tmpReport.setMigrationId(migration.getId());
-                tmpReport.setMigrationReport(report.toString());
-                em.persist(tmpReport);
+                em.persist(new MigrationReport(migration.getId(), reportInstance));
             }
-
             em.persist(migration.complete(hasErrors.get()));
 
         } catch (Exception e) {
@@ -176,21 +152,9 @@ public class MigrationServiceImpl implements MigrationService {
         return migration;
     }
 
-    //This method parses instancesId string like this "[1, 2, 3 ,4]" to List<long>
-    private List<Long> parseProcessInstancesIds(String tmpIds) {
-        List<Long> result = new ArrayList<Long>();
-        //need to remove the [ ] and space
-        tmpIds = tmpIds.replaceAll("[\\[\\] ]", "");
-        Scanner sc = new Scanner(tmpIds).useDelimiter(",");
-        while (sc.hasNextLong()) {
-            result.add(sc.nextLong());
-        }
-        return result;
-    }
-
     private void scheduleMigration(Migration migration, Plan plan) {
 
-        long delay = new Date().getTime() - migration.getScheduleStartTime().getTime();
+        long delay = new Date().getTime() - migration.getDefinition().getExecution().getScheduledStartTime().getTime();
 
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ses.schedule(new Runnable() {
