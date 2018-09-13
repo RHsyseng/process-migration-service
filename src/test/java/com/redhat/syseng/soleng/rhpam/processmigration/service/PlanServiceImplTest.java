@@ -41,6 +41,7 @@ public class PlanServiceImplTest extends PersistenceTest {
 
         assertNotNull(plans);
         assertEquals(1, plans.size());
+        
     }
 
 }

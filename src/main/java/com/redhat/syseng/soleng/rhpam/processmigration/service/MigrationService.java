@@ -5,6 +5,7 @@ import java.util.List;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
 
 public interface MigrationService {
 
@@ -21,4 +22,7 @@ public interface MigrationService {
     //Migration cancel(Long id);
 
     Migration delete(Long id);
+    
+    Migration migrate(Migration migration, Plan plan);
+    
 }
