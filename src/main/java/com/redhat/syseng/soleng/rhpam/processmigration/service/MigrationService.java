@@ -2,10 +2,10 @@ package com.redhat.syseng.soleng.rhpam.processmigration.service;
 
 import java.util.List;
 
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
+import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
 
 public interface MigrationService {
 
@@ -15,14 +15,12 @@ public interface MigrationService {
 
     List<Migration> findAll();
 
-    Migration submit(MigrationDefinition migration);
+    Migration submit(MigrationDefinition definition, Credentials credentials);
 
     Migration update(Long id, MigrationDefinition migration);
 
-    //Migration cancel(Long id);
-
     Migration delete(Long id);
     
-    Migration migrate(Migration migration, Plan plan);
-    
+    Migration migrate(Migration migration);
+
 }

@@ -54,7 +54,7 @@ public class MigrationReport implements Serializable {
     private Boolean successful;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @Column(name = "log")
+    @Column(name = "log", columnDefinition = "TEXT")
     @CollectionTable(
                      name = "migration_report_logs",
                      joinColumns = @JoinColumn(name = "report_id")

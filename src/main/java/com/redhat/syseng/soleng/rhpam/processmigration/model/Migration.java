@@ -56,7 +56,7 @@ public class Migration implements Serializable {
     private Date cancelledAt;
 
     @JsonProperty("error_message")
-    @Column(name = "error_message")
+    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
     private ExecutionStatus status;
@@ -68,7 +68,7 @@ public class Migration implements Serializable {
 
     public Migration() {}
 
-    public Migration(MigrationDefinition definition, Plan plan) {
+    public Migration(MigrationDefinition definition) {
         this.definition = definition;
         Date now = new Date();
         createdAt = now;
@@ -176,7 +176,7 @@ public class Migration implements Serializable {
     public Migration fail(Exception e) {
         finishedAt = new Date();
         status = ExecutionStatus.COMPLETED_WITH_ERRORS;
-        errorMessage = e.getMessage();
+        errorMessage = e.toString();
         return this;
     }
 
