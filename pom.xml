@@ -77,13 +77,13 @@
 			<groupId>io.thorntail</groupId>
 			<artifactId>microprofile-config</artifactId>
 			<exclusions>
+				<!-- https://groups.google.com/forum/#!topic/thorntail/LVzz6UdU3ZE java.lang.ClassCastException: 
+					java.lang.Boolean cannot be cast to java.lang.String -->
 				<exclusion>
 					<groupId>org.wildfly.swarm</groupId>
 					<artifactId>config-api-runtime</artifactId>
 				</exclusion>
 			</exclusions>
-			<!-- https://groups.google.com/forum/#!topic/thorntail/LVzz6UdU3ZE java.lang.ClassCastException: 
-				java.lang.Boolean cannot be cast to java.lang.String -->
 		</dependency>
 		<dependency>
 			<groupId>io.thorntail</groupId>

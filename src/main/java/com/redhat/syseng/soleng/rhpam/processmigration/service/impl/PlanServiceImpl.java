@@ -16,11 +16,11 @@ import com.redhat.syseng.soleng.rhpam.processmigration.service.PlanService;
 public class PlanServiceImpl implements PlanService {
 
     @PersistenceContext
-    private EntityManager entityManager;
+    private EntityManager em;
 
     @Override
     public Plan get(Long id) {
-        TypedQuery<Plan> query = entityManager.createNamedQuery("Plan.findById", Plan.class);
+        TypedQuery<Plan> query = em.createNamedQuery("Plan.findById", Plan.class);
         query.setParameter("id", id);
         try {
             return query.getSingleResult();
@@ -31,21 +31,21 @@ public class PlanServiceImpl implements PlanService {
 
     @Override
     public List<Plan> findAll() {
-        return entityManager.createNamedQuery("Plan.findAll", Plan.class).getResultList();
+        return em.createNamedQuery("Plan.findAll", Plan.class).getResultList();
     }
 
     @Override
     @Transactional
     public Plan delete(Long id) {
-        Plan plan = entityManager.find(Plan.class, id);
-        entityManager.remove(plan);
+        Plan plan = em.find(Plan.class, id);
+        em.remove(plan);
         return plan;
     }
 
     @Override
     @Transactional
     public Plan save(Plan plan) {
-        entityManager.persist(plan);
+        em.persist(plan);
         return plan;
     }
 

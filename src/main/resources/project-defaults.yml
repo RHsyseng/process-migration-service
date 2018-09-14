@@ -17,9 +17,9 @@ swarm:
         user-name: mysqluser
         password: password    
 kieserver:
-  username: krisv
-  password: krisv
   host: localhost
   port: 8080
   protocol: http
   contextRoot: /kie-server
+credentials:
+  password: gUkXp2s5v8x/A?D(

@@ -9,14 +9,18 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
+import javax.security.auth.login.CredentialNotFoundException;
 import javax.transaction.Transactional;
 
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.exceptions.PlanNotFoundException;
+import com.redhat.syseng.soleng.rhpam.processmigration.service.CredentialsProviderFactory;
+import com.redhat.syseng.soleng.rhpam.processmigration.service.CredentialsService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.KieService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.MigrationService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.PlanService;
@@ -40,6 +44,9 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Inject
     private SchedulerService schedulerService;
+
+    @Inject
+    private CredentialsService credentialsService;
 
     @Override
     public Migration get(Long id) {
@@ -66,44 +73,26 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Override
     @Transactional
-    public Migration submit(MigrationDefinition definition) {
-
+    public Migration submit(MigrationDefinition definition, Credentials credentials) {
         Plan plan = planService.get(definition.getPlanId());
         if (plan == null) {
             throw new PlanNotFoundException(definition.getPlanId());
         }
-        Migration migration = new Migration(definition, plan);
+        Migration migration = new Migration(definition);
         em.persist(migration);
 
         if (ExecutionType.ASYNC.equals(definition.getExecution().getType())) {
-            schedulerService.scheduleMigration(migration, plan);
+            schedulerService.scheduleMigration(migration, credentials);
             return migration;
         } else {
-            return migrate(migration, plan);
+            credentialsService.save(credentials.setMigrationId(migration.getId()));
+            return migrate(migration, plan, credentials);
         }
     }
-
-    /*
-    @Override
-    @Transactional
-    public Migration cancel(Long id) {
-
-        Migration migration = get(id);
-        if (migration == null) {
-            return null;
-        }
-        if (ExecutionStatus.SCHEDULED.equals(migration.getExecutionStatus()) || ExecutionStatus.CREATED.equals(migration.getExecutionStatus())) {
-            em.persist(migration.cancel());
-        }
-        return migration;
-
-    }
-     */
 
     @Override
     @Transactional
     public Migration delete(Long id) {
-
         Migration migration = get(id);
         if (migration == null) {
             return null;
@@ -124,15 +113,27 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Override
     @Transactional
-    public Migration migrate(Migration migration, Plan plan) {
+    public Migration migrate(Migration migration) {
+        Plan plan = planService.get(migration.getDefinition().getPlanId());
+        if (plan == null) {
+            throw new PlanNotFoundException(migration.getDefinition().getPlanId());
+        }
+        Credentials credentials = credentialsService.get(migration.getId());
+        return migrate(migration, plan, credentials);
+    }
+    
+    private Migration migrate(Migration migration, Plan plan, Credentials credentials) {
         em.persist(migration.start());
         try {
+            if (credentials == null) {
+                throw new CredentialNotFoundException();
+            }
             AtomicBoolean hasErrors = new AtomicBoolean(false);
             //each instance id will spawn its own request to KIE server for migration.
             List<Long> instancesIdList = migration.getDefinition().getProcessInstanceIds();
             for (Long instanceId : instancesIdList) {
                 MigrationReportInstance reportInstance = kieService
-                                                                   .getProcessAdminServicesClient()
+                                                                   .createProcessAdminServicesClient(CredentialsProviderFactory.getProvider(credentials))
                                                                    .migrateProcessInstance(
                                                                                            plan.getSourceContainerId(),
                                                                                            instanceId,
@@ -144,35 +145,15 @@ public class MigrationServiceImpl implements MigrationService {
                 }
                 em.persist(new MigrationReport(migration.getId(), reportInstance));
             }
-            em.persist(migration.complete(hasErrors.get()));
-
+            migration.complete(hasErrors.get());
         } catch (Exception e) {
             logger.error("Migration failed", e);
-            em.persist(migration.fail(e));
+            migration.fail(e);
+        } finally {
+            credentialsService.delete(migration.getId());
+            em.persist(migration);
         }
         return migration;
     }
-
-    /*
-    private void scheduleMigration(Migration migration, Plan plan) {
-    
-        long delay = new Date().getTime() - migration.getDefinition().getExecution().getScheduledStartTime().getTime();
-    
-        ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
-        ses.schedule(new Runnable() {
-    
-            @Override
-            public void run() {
-                Migration result = migrate(migration, plan);
-    
-                // TODO: Refactor
-                // ResteasyClient client = new ResteasyClientBuilder().build();
-                // ResteasyWebTarget target =
-                // client.target(migration.getDefinition().getExecution().getCallbackUrl());
-                // target.request().post(Entity.text(result));
-            }
-        }, delay, TimeUnit.MILLISECONDS); // run in "delay" milliseconds
-    }
-    */
 
 }

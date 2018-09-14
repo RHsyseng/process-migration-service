@@ -18,12 +18,6 @@ public class KieServerConfig {
     @ConfigurationValue("kieserver.contextRoot")
     private String contextRoot;
     @Inject
-    @ConfigurationValue("kieserver.username")
-    private String username;
-    @Inject
-    @ConfigurationValue("kieserver.password")
-    private String password;
-    @Inject
     @ConfigurationValue("kieserver.protocol")
     private String protocol;
 
@@ -51,22 +45,6 @@ public class KieServerConfig {
         this.contextRoot = contextRoot;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
     public String getProtocol() {
         return protocol;
     }
@@ -90,8 +68,7 @@ public class KieServerConfig {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("KieServerConfig [host=").append(host).append(", port=").append(port).append(", contextRoot=")
-               .append(contextRoot).append(", username=").append(username).append(", password=").append(password)
-               .append(", protocol=").append(protocol).append("]");
+               .append(contextRoot).append(", protocol=").append(protocol).append("]");
         return builder.toString();
     }
 

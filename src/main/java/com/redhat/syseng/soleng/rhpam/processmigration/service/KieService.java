@@ -2,14 +2,16 @@ package com.redhat.syseng.soleng.rhpam.processmigration.service;
 
 import org.kie.server.api.model.KieServerStateInfo;
 import org.kie.server.api.model.ServiceResponse;
+import org.kie.server.client.CredentialsProvider;
 import org.kie.server.client.KieServicesClient;
 import org.kie.server.client.admin.ProcessAdminServicesClient;
 
 public interface KieService {
 
-    ProcessAdminServicesClient getProcessAdminServicesClient();
+    ProcessAdminServicesClient createProcessAdminServicesClient(CredentialsProvider credentialsProvider);
 
-    KieServicesClient getKieServicesClient();
+    KieServicesClient createKieServicesClient(CredentialsProvider credentialsProvider);
 
-    ServiceResponse<KieServerStateInfo> getServerState();
+    ServiceResponse<KieServerStateInfo> getServerState(CredentialsProvider credentialsProvider);
+
 }

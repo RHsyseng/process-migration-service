@@ -9,15 +9,18 @@ import javax.ejb.Timer;
 import javax.ejb.TimerService;
 import javax.inject.Inject;
 
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
-import com.redhat.syseng.soleng.rhpam.processmigration.model.Plan;
+import com.redhat.syseng.soleng.rhpam.processmigration.service.CredentialsService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.MigrationService;
-import com.redhat.syseng.soleng.rhpam.processmigration.service.PlanService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.SchedulerService;
+import org.jboss.logging.Logger;
 
 @Singleton
 @Startup
 public class EjbTimerSchedulerServiceImpl implements SchedulerService {
+
+    private static final Logger logger = Logger.getLogger(EjbTimerSchedulerServiceImpl.class);
 
     @Resource
     private TimerService timerService;
@@ -26,30 +29,26 @@ public class EjbTimerSchedulerServiceImpl implements SchedulerService {
     private MigrationService migrationService;
 
     @Inject
-    private PlanService planService;
+    private CredentialsService credentialsService;
 
     @Timeout
     public void doMigration(Timer timer) {
-        String timerInfoStr = (String) timer.getInfo();
-        String migrationId = timerInfoStr.substring(0, timerInfoStr.indexOf(","));
-        String planId = timerInfoStr.substring(timerInfoStr.indexOf(",") + 1);
-        Migration migration = migrationService.get(Long.parseLong(migrationId));
-        Plan plan = planService.get(Long.parseLong(planId));
-
-        migrationService.migrate(migration, plan);
+        Long migrationId = (Long) timer.getInfo();
+        Migration migration = migrationService.get(migrationId);
+        migrationService.migrate(migration);
     }
 
     @Override
-    public void scheduleMigration(Migration migration, Plan plan) {
-        String timerInfoStr = migration.getId() + "," + plan.getId();
-        timerService.createTimer(migration.getDefinition().getExecution().getScheduledStartTime(), timerInfoStr);
+    public void scheduleMigration(Migration migration, Credentials credentials) {
+        credentialsService.save(credentials);
+        Long migrationId = migration.getId();
+        timerService.createTimer(migration.getDefinition().getExecution().getScheduledStartTime(), migrationId);
     }
 
     @PreDestroy
-    public void stop() {
-        // Stop all timers
+    public void stopAll() {
         for (Timer timer : timerService.getTimers()) {
-            System.out.println("Stopping timer: " + timer.getInfo());
+            logger.infof("Stopping timer: %s", timer.getInfo());
             timer.cancel();
         }
     }
