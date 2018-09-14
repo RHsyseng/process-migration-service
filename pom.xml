@@ -102,6 +102,12 @@
 			<artifactId>jpa</artifactId>
 		</dependency>
 
+         <!-- for ejb timer --> 
+         <dependency>
+           <groupId>io.thorntail</groupId>
+           <artifactId>ejb</artifactId>
+         </dependency>
+
 		<!-- JDBC Drivers -->
 		<dependency>
 			<groupId>mysql</groupId>

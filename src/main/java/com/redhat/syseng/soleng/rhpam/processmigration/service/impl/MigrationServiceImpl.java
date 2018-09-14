@@ -1,10 +1,6 @@
 package com.redhat.syseng.soleng.rhpam.processmigration.service.impl;
 
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -24,6 +20,7 @@ import com.redhat.syseng.soleng.rhpam.processmigration.model.exceptions.PlanNotF
 import com.redhat.syseng.soleng.rhpam.processmigration.service.KieService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.MigrationService;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.PlanService;
+import com.redhat.syseng.soleng.rhpam.processmigration.service.SchedulerService;
 import org.jboss.logging.Logger;
 import org.kie.server.api.model.admin.MigrationReportInstance;
 
@@ -40,6 +37,9 @@ public class MigrationServiceImpl implements MigrationService {
 
     @Inject
     private KieService kieService;
+
+    @Inject
+    private SchedulerService schedulerService;
 
     @Override
     public Migration get(Long id) {
@@ -76,7 +76,7 @@ public class MigrationServiceImpl implements MigrationService {
         em.persist(migration);
 
         if (ExecutionType.ASYNC.equals(definition.getExecution().getType())) {
-            scheduleMigration(migration, plan);
+            schedulerService.scheduleMigration(migration, plan);
             return migration;
         } else {
             return migrate(migration, plan);
@@ -87,7 +87,7 @@ public class MigrationServiceImpl implements MigrationService {
     @Override
     @Transactional
     public Migration cancel(Long id) {
-    
+
         Migration migration = get(id);
         if (migration == null) {
             return null;
@@ -96,10 +96,10 @@ public class MigrationServiceImpl implements MigrationService {
             em.persist(migration.cancel());
         }
         return migration;
-    
+
     }
-    
      */
+
     @Override
     @Transactional
     public Migration delete(Long id) {
@@ -122,8 +122,9 @@ public class MigrationServiceImpl implements MigrationService {
         return migration;
     }
 
+    @Override
     @Transactional
-    private Migration migrate(Migration migration, Plan plan) {
+    public Migration migrate(Migration migration, Plan plan) {
         em.persist(migration.start());
         try {
             AtomicBoolean hasErrors = new AtomicBoolean(false);
@@ -152,17 +153,18 @@ public class MigrationServiceImpl implements MigrationService {
         return migration;
     }
 
+    /*
     private void scheduleMigration(Migration migration, Plan plan) {
-
+    
         long delay = new Date().getTime() - migration.getDefinition().getExecution().getScheduledStartTime().getTime();
-
+    
         ScheduledExecutorService ses = Executors.newSingleThreadScheduledExecutor();
         ses.schedule(new Runnable() {
-
+    
             @Override
             public void run() {
                 Migration result = migrate(migration, plan);
-
+    
                 // TODO: Refactor
                 // ResteasyClient client = new ResteasyClientBuilder().build();
                 // ResteasyWebTarget target =
@@ -171,5 +173,6 @@ public class MigrationServiceImpl implements MigrationService {
             }
         }, delay, TimeUnit.MILLISECONDS); // run in "delay" milliseconds
     }
+    */
 
 }
