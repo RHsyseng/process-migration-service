@@ -2,7 +2,6 @@ package com.redhat.syseng.soleng.rhpam.processmigration.service.impl;
 
 import java.net.URI;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -19,7 +18,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import com.arjuna.ats.jta.UserTransaction;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
@@ -80,30 +78,19 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     @Override
+    @Transactional
     public Migration submit(MigrationDefinition definition, Credentials credentials) {
         Plan plan = planService.get(definition.getPlanId());
         if (plan == null) {
             throw new PlanNotFoundException(definition.getPlanId());
         }
         Migration migration = new Migration(definition);
-        beginTx();
         em.persist(migration);
         if (ExecutionType.SYNC.equals(definition.getExecution().getType())) {
             credentialsService.save(credentials.setMigrationId(migration.getId()));
             migrate(migration, plan, credentials);
-            commitTx();
         } else {
-            if (definition.getExecution().getScheduledStartTime() == null) {
-                commitTx();
-                CompletableFuture.runAsync(() -> {
-                    beginTx();
-                    migrate(migration, plan, credentials);
-                    commitTx();
-                });
-            } else {
-                schedulerService.scheduleMigration(migration, credentials);
-                commitTx();
-            }
+            schedulerService.scheduleMigration(migration, credentials);
         }
         return migration;
     }
@@ -198,23 +185,4 @@ public class MigrationServiceImpl implements MigrationService {
         }
     }
 
-    private void beginTx() {
-        try {
-            if (UserTransaction.userTransaction().getStatus() == javax.transaction.Status.STATUS_NO_TRANSACTION) {
-                UserTransaction.userTransaction().begin();
-            }
-        } catch (Exception e) {
-            logger.error("Unable to begin transaction.", e);
-        }
-    }
-
-    private void commitTx() {
-        try {
-            if (UserTransaction.userTransaction().getStatus() == javax.transaction.Status.STATUS_ACTIVE) {
-                UserTransaction.userTransaction().commit();
-            }
-        } catch (Exception e) {
-            logger.error("Unable to commit transaction.", e);
-        }
-    }
 }

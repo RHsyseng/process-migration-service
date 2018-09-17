@@ -1,5 +1,7 @@
 package com.redhat.syseng.soleng.rhpam.processmigration.service.impl;
 
+import java.util.Date;
+
 import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.Singleton;
@@ -42,7 +44,11 @@ public class EjbTimerSchedulerServiceImpl implements SchedulerService {
     public void scheduleMigration(Migration migration, Credentials credentials) {
         Long migrationId = migration.getId();
         credentialsService.save(credentials.setMigrationId(migrationId));
-        timerService.createTimer(migration.getDefinition().getExecution().getScheduledStartTime(), migrationId);
+        if (migration.getDefinition().getExecution().getScheduledStartTime() == null) {
+            timerService.createTimer(new Date(), migrationId);
+        } else {
+            timerService.createTimer(migration.getDefinition().getExecution().getScheduledStartTime(), migrationId);
+        }
     }
 
     @PreDestroy
