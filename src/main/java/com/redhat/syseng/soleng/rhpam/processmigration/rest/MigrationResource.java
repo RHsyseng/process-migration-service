@@ -19,6 +19,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
+import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationDefinition;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.MigrationReport;
@@ -66,7 +67,11 @@ public class MigrationResource {
         if (credentials == null) {
             return Response.status(Status.UNAUTHORIZED).header(HttpHeaders.WWW_AUTHENTICATE, "Basic").build();
         }
-        return Response.accepted(migrationService.submit(migration, credentials)).build();
+        if (ExecutionType.ASYNC.equals(migration.getExecution().getType())) {
+            return Response.accepted(migrationService.submit(migration, credentials)).build();
+        } else {
+            return Response.ok(migrationService.submit(migration, credentials)).build();
+        }
     }
 
     @PUT
