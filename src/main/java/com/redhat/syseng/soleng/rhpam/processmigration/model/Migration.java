@@ -72,7 +72,9 @@ public class Migration implements Serializable {
         this.definition = definition;
         Date now = new Date();
         createdAt = now;
-        if (ExecutionType.ASYNC.equals(definition.getExecution().getType()) && now.before(definition.getExecution().getScheduledStartTime())) {
+        if (ExecutionType.ASYNC.equals(definition.getExecution().getType()) &&
+            definition.getExecution().getScheduledStartTime() != null &&
+            now.before(definition.getExecution().getScheduledStartTime())) {
             status = Execution.ExecutionStatus.SCHEDULED;
         } else {
             status = Execution.ExecutionStatus.CREATED;

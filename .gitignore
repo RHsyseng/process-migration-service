@@ -2,6 +2,4 @@ target/
 .classpath
 .settings
 .project
-utils/deploy_calvin.sh
-src/main/resources/project-calvin.yml
 nb-configuration.xml

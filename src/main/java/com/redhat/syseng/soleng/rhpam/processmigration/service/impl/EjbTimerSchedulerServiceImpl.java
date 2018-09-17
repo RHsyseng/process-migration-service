@@ -40,8 +40,8 @@ public class EjbTimerSchedulerServiceImpl implements SchedulerService {
 
     @Override
     public void scheduleMigration(Migration migration, Credentials credentials) {
-        credentialsService.save(credentials);
         Long migrationId = migration.getId();
+        credentialsService.save(credentials.setMigrationId(migrationId));
         timerService.createTimer(migration.getDefinition().getExecution().getScheduledStartTime(), migrationId);
     }
 

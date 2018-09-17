@@ -4,6 +4,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.transaction.Transactional;
 
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.service.CredentialsService;
@@ -15,6 +16,7 @@ public class CredentialsServiceImpl implements CredentialsService {
     private EntityManager em;
 
     @Override
+    @Transactional
     public Credentials get(Long id) {
         try {
             return em.createNamedQuery("Credentials.findByMigrationId", Credentials.class)
@@ -26,15 +28,17 @@ public class CredentialsServiceImpl implements CredentialsService {
     }
 
     @Override
+    @Transactional
     public Credentials save(Credentials credentials) {
         em.persist(credentials);
         return credentials;
     }
 
     @Override
+    @Transactional
     public Credentials delete(Long id) {
         Credentials cred = get(id);
-        if(cred != null) {
+        if (cred != null) {
             em.remove(cred);
             return cred;
         }

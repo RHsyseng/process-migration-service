@@ -1,6 +1,8 @@
 package com.redhat.syseng.soleng.rhpam.processmigration.service.impl;
 
+import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -11,7 +13,13 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.security.auth.login.CredentialNotFoundException;
 import javax.transaction.Transactional;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
+import com.arjuna.ats.jta.UserTransaction;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Credentials;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Execution.ExecutionType;
 import com.redhat.syseng.soleng.rhpam.processmigration.model.Migration;
@@ -72,22 +80,32 @@ public class MigrationServiceImpl implements MigrationService {
     }
 
     @Override
-    @Transactional
     public Migration submit(MigrationDefinition definition, Credentials credentials) {
         Plan plan = planService.get(definition.getPlanId());
         if (plan == null) {
             throw new PlanNotFoundException(definition.getPlanId());
         }
         Migration migration = new Migration(definition);
+        beginTx();
         em.persist(migration);
-
-        if (ExecutionType.ASYNC.equals(definition.getExecution().getType())) {
-            schedulerService.scheduleMigration(migration, credentials);
-            return migration;
-        } else {
+        if (ExecutionType.SYNC.equals(definition.getExecution().getType())) {
             credentialsService.save(credentials.setMigrationId(migration.getId()));
-            return migrate(migration, plan, credentials);
+            migrate(migration, plan, credentials);
+            commitTx();
+        } else {
+            if (definition.getExecution().getScheduledStartTime() == null) {
+                commitTx();
+                CompletableFuture.runAsync(() -> {
+                    beginTx();
+                    migrate(migration, plan, credentials);
+                    commitTx();
+                });
+            } else {
+                schedulerService.scheduleMigration(migration, credentials);
+                commitTx();
+            }
         }
+        return migration;
     }
 
     @Override
@@ -121,10 +139,11 @@ public class MigrationServiceImpl implements MigrationService {
         Credentials credentials = credentialsService.get(migration.getId());
         return migrate(migration, plan, credentials);
     }
-    
+
     private Migration migrate(Migration migration, Plan plan, Credentials credentials) {
-        em.persist(migration.start());
         try {
+            migration = em.find(Migration.class, migration.getId());
+            em.persist(migration.start());
             if (credentials == null) {
                 throw new CredentialNotFoundException();
             }
@@ -152,8 +171,50 @@ public class MigrationServiceImpl implements MigrationService {
         } finally {
             credentialsService.delete(migration.getId());
             em.persist(migration);
+            if (ExecutionType.ASYNC.equals(migration.getDefinition().getExecution().getType()) &&
+                migration.getDefinition().getExecution().getCallbackUrl() != null) {
+                doCallback(migration);
+            }
         }
         return migration;
     }
 
+    private void doCallback(Migration migration) {
+        URI callbackURI = null;
+        try {
+            callbackURI = migration.getDefinition().getExecution().getCallbackUrl();
+            Response response = ClientBuilder.newClient()
+                                             .target(callbackURI)
+                                             .request(MediaType.APPLICATION_JSON)
+                                             .buildPost(Entity.json(migration))
+                                             .invoke();
+            if (Status.OK.getStatusCode() == response.getStatus()) {
+                logger.debugf("Migration [%s] - Callback to %s replied successfully", migration.getId(), callbackURI);
+            } else {
+                logger.warnf("Migration [%s] - Callback to %s replied with %s", migration.getId(), callbackURI, response.getStatus());
+            }
+        } catch (Exception e) {
+            logger.errorf("Migration [%s] - Callback to %s failed.", migration.getId(), callbackURI, e);
+        }
+    }
+
+    private void beginTx() {
+        try {
+            if (UserTransaction.userTransaction().getStatus() == javax.transaction.Status.STATUS_NO_TRANSACTION) {
+                UserTransaction.userTransaction().begin();
+            }
+        } catch (Exception e) {
+            logger.error("Unable to begin transaction.", e);
+        }
+    }
+
+    private void commitTx() {
+        try {
+            if (UserTransaction.userTransaction().getStatus() == javax.transaction.Status.STATUS_ACTIVE) {
+                UserTransaction.userTransaction().commit();
+            }
+        } catch (Exception e) {
+            logger.error("Unable to commit transaction.", e);
+        }
+    }
 }
